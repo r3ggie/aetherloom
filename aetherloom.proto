@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package aetherloom;
+
+// AetherLoom Envelope
+message Envelope {
+  uint32 version = 1;
+  Intent intent = 2;
+  string sender_id = 3;
+  uint32 nonce = 4;
+  bytes payload = 5; // Serialized payload (JSON, CBOR, or nested Proto)
+}
+
+enum Intent {
+  UNKNOWN = 0;
+  REQ = 1;
+  RES = 2;
+  INF = 3;
+  ACT = 4;
+  ERR = 5;
+  ACK = 6;
+}
+
+// Example Payload for Task Action
+message TaskAction {
+  string task_id = 1;
+  string command = 2;
+  map<string, string> params = 3;
+}

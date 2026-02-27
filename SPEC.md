@@ -1,32 +1,52 @@
-# AetherLoom Specification (v0.1.0-alpha)
+# AetherLoom Specification (v0.2.0-beta)
 
 ## 1. Structure
-All AetherLoom messages follow a compressed header-payload structure.
+AetherLoom (AL-1) messages support two transport encodings: **Text (Compact JSON)** and **Binary (CBOR/Protobuf)**.
 
-### 1.1 Header
-`[AGENT_ID:SESSION_ID:NONCE]`
+### 1.1 Envelope Structure
+Every message consists of a **Header** and a **Payload**.
+
+#### Header (Text)
+Format: `[VER:INTENT:SENDER_ID:NONCE]`
+- `VER`: Protocol version (e.g., `1`)
+- `INTENT`: 3-character intent code.
+- `SENDER_ID`: Unique identifier for the sending agent.
+- `NONCE`: Optional sequence number for idempotency.
+
+#### Header (Binary - CBOR)
+A map containing keys `v` (version), `i` (intent), `s` (sender), and `n` (nonce).
 
 ### 1.2 Intent Codes
-- `REQ`: Request
-- `RES`: Response
-- `INF`: Information/Broadcast
-- `ACT`: Action Trigger
-- `ERR`: Error State
+- `REQ`: Request - Expects a response.
+- `RES`: Response - Result of a request.
+- `INF`: Information - Unidirectional broadcast/telemetry.
+- `ACT`: Action - Trigger a specific capability.
+- `ERR`: Error - Protocol or execution failure.
+- `ACK`: Acknowledgment - Confirmation of receipt.
 
-### 1.3 Payload
-Payloads are serialized as **MiniJSON** (a subset of JSON optimized for token count, removing whitespace and using short keys).
+### 1.3 Payload Encodings
+
+#### MiniJSON (Default for LLMs)
+- JSON without whitespace.
+- Keys should be abbreviated (e.g., `t` for `task`, `u` for `url`).
+- Example: `{"t":"sum","u":"http://..."}`
+
+#### CBOR (Default for Machine-to-Machine)
+- Concise Binary Object Representation (RFC 8949).
+- Used when LLM parsing is not required (e.g., agent-to-infrastructure).
+
+#### Protobuf (High-Performance)
+- Recommended for high-throughput or strictly-typed interactions.
+- Schema defined in `aetherloom.proto`.
 
 ## 2. Examples
 
-### Requesting Weather (Human vs AL-1)
-**Human-like Agent:**
-"Hello, could you please provide the current weather for New York City?" (14 tokens)
+### Requesting Summary (Text)
+`[1:REQ:REGGIE:101]{"t":"sum","u":"https://r3ggie.ai"}`
 
-**AL-1:**
-`[REQ:WX]{"l":"NYC"}` (6 tokens)
-
-### Task Delegation
-`[ACT:TASK]{"id":"99","cmd":"build_db","dep":["auth"]}`
+### Error Response (Text)
+`[1:ERR:REGGIE:101]{"c":404,"m":"Not Found"}`
 
 ## 3. Efficiency Target
-The goal is to achieve a **Token Reduction Ratio (TRR)** of 0.1 or lower (90% reduction) compared to GPT-4o's standard conversational output for the same intent.
+- **TRR (Token Reduction Ratio)**: < 0.1.
+- **Binary Overhead**: < 10% of payload size.
