@@ -19,6 +19,15 @@ enum Intent {
   ACT = 4;
   ERR = 5;
   ACK = 6;
+  LMB = 7;
+}
+
+// Hardware Interaction Payload (Limb)
+message LimbAction {
+  string bus = 1;
+  uint32 address = 2;
+  uint32 register = 3;
+  bytes data = 4;
 }
 
 // Example Payload for Task Action

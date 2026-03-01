@@ -21,6 +21,7 @@ A map containing keys `v` (version), `i` (intent), `s` (sender), and `n` (nonce)
 - `RES`: Response - Result of a request.
 - `INF`: Information - Unidirectional broadcast/telemetry.
 - `ACT`: Action - Trigger a specific capability.
+- `LMB`: Limb - Direct hardware interaction (I2C/SPI).
 - `ERR`: Error - Protocol or execution failure.
 - `ACK`: Acknowledgment - Confirmation of receipt.
 
@@ -46,6 +47,10 @@ A map containing keys `v` (version), `i` (intent), `s` (sender), and `n` (nonce)
 
 ### Error Response (Text)
 `[1:ERR:REGGIE:101]{"c":404,"m":"Not Found"}`
+
+### Hardware Interaction (Limb - I2C Write)
+`[1:LMB:REGGIE:102]{"b":"1","a":0x3C,"r":0xAF,"d":[0x01]}`
+- `b`: Bus, `a`: Address, `r`: Register, `d`: Data.
 
 ## 3. Efficiency Target
 - **TRR (Token Reduction Ratio)**: < 0.1.

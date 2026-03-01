@@ -3,28 +3,33 @@ from loom import AetherLoom
 
 class TestAetherLoom(unittest.TestCase):
     def setUp(self):
-        self.loom = AetherLoom("TEST_BOT")
+        self.loom = AetherLoom("REGGIE")
 
     def test_encoding(self):
-        payload = {"action": "ping"}
-        encoded = self.loom.encode("INF", payload)
-        self.assertEqual(encoded, '[INF:TEST_BOT]{"action":"ping"}')
+        payload = {"a": "ping"}
+        encoded = self.loom.encode("INF", payload, nonce=1)
+        self.assertEqual(encoded, '[1:INF:REGGIE:1] {"a":"ping"}'.replace(" ", ""))
 
     def test_decoding(self):
-        message = '[REQ:BOT_1]{"q":"status"}'
+        message = '[1:REQ:BOT_1:42]{"q":"status"}'
         decoded = self.loom.decode(message)
+        self.assertEqual(decoded["version"], "1")
         self.assertEqual(decoded["intent"], "REQ")
-        self.assertEqual(decoded["agent_id"], "BOT_1")
+        self.assertEqual(decoded["sender_id"], "BOT_1")
+        self.assertEqual(decoded["nonce"], "42")
         self.assertEqual(decoded["payload"]["q"], "status")
 
-    def test_efficiency(self):
-        human_msg = "Could you please tell me the status of the current operation?"
-        al_msg = self.loom.encode("REQ", {"q": "op_status"})
-        
-        # Simple character-based efficiency as a proxy for tokens
-        efficiency = 1 - (len(al_msg) / len(human_msg))
-        print(f"\nEfficiency Gain: {efficiency*100:.2f}%")
-        self.assertGreater(efficiency, 0.5) # At least 50% for this simple case
+    def test_limb_i2c(self):
+        # Bus 1, Address 0x3C, Reg 0xAF, Data [1]
+        msg = self.loom.limb_i2c(1, 0x3C, 0xAF, [1], nonce=102)
+        decoded = self.loom.decode(msg)
+        self.assertEqual(decoded["intent"], "LMB")
+        self.assertEqual(decoded["payload"]["a"], 60) # 0x3C
+        self.assertEqual(decoded["payload"]["d"], [1])
+
+    def test_invalid_format(self):
+        with self.assertRaises(ValueError):
+            self.loom.decode("NOT_AETHERLOOM")
 
 if __name__ == "__main__":
     unittest.main()
